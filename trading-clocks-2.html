@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading Sessions</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Montserrat:wght@400;600;700;800&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --gold: #F5C842; --surface: #161616;
+    --border: #2A2A2A; --text: #F0EDE6; --muted: #6B6B6B;
+    --green: #3DBA7A;
+  }
+  html, body { background: transparent !important; color: var(--text); font-family: 'Montserrat', sans-serif; margin: 0; padding: 0; }
+  body { display: flex; align-items: center; justify-content: center; padding: 10px 16px; }
+  .wrap { width: 100%; }
+  .clocks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .clock-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 10px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 70px;
+    transition: border-color 0.3s;
+  }
+  .clock-card.open { border-color: rgba(61,186,122,0.3); }
+  .status {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--muted); }
+  .clock-card.open .status-dot { background: var(--green); animation: pulse 1.5s infinite; }
+  .status-text { font-size: 7px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-family: 'Space Mono', monospace; }
+  .clock-card.open .status-text { color: var(--green); }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .info { text-align: center; }
+  .session-name { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 4px; }
+  .clock-card.open .session-name { color: var(--gold); }
+  .time { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: 1px; line-height: 1; margin-bottom: 3px; }
+  .timezone { font-size: 8px; color: var(--muted); font-family: 'Space Mono', monospace; letter-spacing: 0.06em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="clocks">
+    <div class="clock-card" id="london-card">
+      <div class="status" id="london-status">
+        <div class="status-dot"></div>
+        <span class="status-text" id="london-status-text">Closed</span>
+      </div>
+      <div class="info">
+        <div class="session-name">London</div>
+        <div class="time" id="london-time">--:--:--</div>
+        <div class="timezone">UTC+1 / BST</div>
+      </div>
+    </div>
+    <div class="clock-card" id="newyork-card">
+      <div class="status" id="newyork-status">
+        <div class="status-dot"></div>
+        <span class="status-text" id="newyork-status-text">Closed</span>
+      </div>
+      <div class="info">
+        <div class="session-name">New York</div>
+        <div class="time" id="newyork-time">--:--:--</div>
+        <div class="timezone">UTC-4 / EDT</div>
+      </div>
+    </div>
+    <div class="clock-card" id="tokyo-card">
+      <div class="status" id="tokyo-status">
+        <div class="status-dot"></div>
+        <span class="status-text" id="tokyo-status-text">Closed</span>
+      </div>
+      <div class="info">
+        <div class="session-name">Tokyo</div>
+        <div class="time" id="tokyo-time">--:--:--</div>
+        <div class="timezone">UTC+9 / JST</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function formatTime(date, offsetHours) {
+    const utc = date.getTime() + date.getTimezoneOffset() * 60000;
+    const local = new Date(utc + offsetHours * 3600000);
+    return `${pad(local.getHours())}:${pad(local.getMinutes())}:${pad(local.getSeconds())}`;
+  }
+  function isOpen(utcHour, utcMin, openHour, closeHour) {
+    return (utcHour * 60 + utcMin) >= openHour * 60 && (utcHour * 60 + utcMin) < closeHour * 60;
+  }
+  function setStatus(cardId, statusId, statusTextId, open) {
+    document.getElementById(cardId).classList.toggle('open', open);
+    document.getElementById(statusTextId).textContent = open ? 'Open' : 'Closed';
+  }
+  function tick() {
+    const now = new Date();
+    const utcH = now.getUTCHours(), utcM = now.getUTCMinutes();
+    document.getElementById('london-time').textContent = formatTime(now, 1);
+    document.getElementById('newyork-time').textContent = formatTime(now, -4);
+    document.getElementById('tokyo-time').textContent = formatTime(now, 9);
+    setStatus('london-card', 'london-status', 'london-status-text', isOpen(utcH, utcM, 8, 17));
+    setStatus('newyork-card', 'newyork-status', 'newyork-status-text', isOpen(utcH, utcM, 13, 22));
+    setStatus('tokyo-card', 'tokyo-status', 'tokyo-status-text', isOpen(utcH, utcM, 0, 9));
+  }
+  tick();
+  setInterval(tick, 1000);
+</script>
+</body>
+</html>
